@@ -1,0 +1,109 @@
+<template>
+  <sa-search-bar
+    ref="searchBarRef"
+    v-model="formData"
+    label-width="100px"
+    :showExpand="false"
+    @reset="handleReset"
+    @search="handleSearch"
+    @expand="handleExpand"
+  >
+    <el-col v-bind="setSpan(6)">
+      <el-form-item label="所属分组" prop="group_id">
+        <el-select
+          v-model="formData.group_id"
+          :options="optionData.group_id"
+          :props="{ label: 'group_name', value: 'id' }"
+          placeholder="请选择所属分组"
+          clearable
+        />
+      </el-form-item>
+    </el-col>
+    <el-col v-bind="setSpan(6)">
+      <el-form-item label="机构名称" prop="organization_name">
+        <el-input v-model="formData.organization_name" placeholder="请输入机构名称" clearable />
+      </el-form-item>
+    </el-col>
+    <el-col v-bind="setSpan(8)">
+      <el-form-item label="创建时间" prop="create_time">
+        <el-date-picker
+          v-model="formData.create_time"
+          type="daterange"
+          start-placeholder="开始日期"
+          end-placeholder="结束日期"
+          value-format="YYYY-MM-DD"
+          clearable
+        />
+      </el-form-item>
+    </el-col>
+  </sa-search-bar>
+</template>
+
+<script setup lang="ts">
+  import commonApi from '@/api/common'
+
+  interface Props {
+    modelValue: Record<string, any>
+  }
+  interface Emits {
+    (e: 'update:modelValue', value: Record<string, any>): void
+    (e: 'search', params: Record<string, any>): void
+    (e: 'reset'): void
+  }
+  const props = defineProps<Props>()
+  const emit = defineEmits<Emits>()
+
+  // 展开/收起
+  const isExpanded = ref<boolean>(false)
+
+  // 表单数据双向绑定
+  const searchBarRef = ref()
+  const formData = computed({
+    get: () => props.modelValue,
+    set: (val) => emit('update:modelValue', val)
+  })
+
+  // 选项数据
+  const optionData = reactive({
+    group_id: <any[]>[],
+  })
+
+  // 初始化选项数据
+  const initOptions = async () => {
+    const resp_group_id = await commonApi.get('/saimulti/admin/group/index?saiType=all')
+    optionData.group_id = resp_group_id
+  }
+
+  // 组件挂载时初始化选项数据
+  onMounted(() => {
+    initOptions()
+  })
+
+  // 重置
+  function handleReset() {
+    searchBarRef.value?.ref.resetFields()
+    emit('reset')
+  }
+
+  // 搜索
+  async function handleSearch() {
+    emit('search', formData.value)
+  }
+
+  // 展开/收起
+  function handleExpand(expanded: boolean) {
+    isExpanded.value = expanded
+  }
+
+  // 栅格占据的列数
+  const setSpan = (span: number) => {
+    return {
+      span: span,
+      xs: 24, // 手机：满宽显示
+      sm: span >= 12 ? span : 12, // 平板：大于等于12保持，否则用半宽
+      md: span >= 8 ? span : 8, // 中等屏幕：大于等于8保持，否则用三分之一宽
+      lg: span,
+      xl: span
+    }
+  }
+</script>
