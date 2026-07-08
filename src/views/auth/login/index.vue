@@ -1,13 +1,14 @@
 <!-- 登录页面 -->
 <template>
-  <div class="flex w-full h-screen">
+  <div class="login-page flex w-full h-screen">
     <LoginLeftView />
 
-    <div class="relative flex-1">
+    <div class="login-form-side relative flex-1">
       <AuthTopBar />
 
       <div class="auth-right-wrap">
         <div class="form">
+          <div class="entry-badge">{{ $t('login.entryLabel') }}</div>
           <h3 class="title">{{ $t('login.title') }}</h3>
           <p class="sub-title">{{ $t('login.subTitle') }}</p>
           <ElForm
@@ -16,7 +17,7 @@
             :rules="rules"
             :key="formKey"
             @keyup.enter="handleSubmit"
-            style="margin-top: 25px"
+            style="margin-top: 30px"
           >
             <ElFormItem prop="username">
               <ElInput

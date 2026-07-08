@@ -1,7 +1,7 @@
 <!-- 系统logo -->
 <template>
   <div class="flex-cc">
-    <img :style="logoStyle" src="@imgs/common/logo.png" alt="logo" class="w-full h-full" />
+    <img :style="logoStyle" src="@imgs/common/b8im-logo.svg" alt="b8im logo" class="w-full h-full" />
   </div>
 </template>
 

@@ -139,11 +139,17 @@
   },
   "login": {
     "leftView": {
-      "title": "一款兼具设计美学与高效开发的后台系统",
-      "subTitle": "美观实用的界面，经过视觉优化，确保卓越的用户体验"
+      "title": "b8im 即时通讯平台控制面",
+      "subTitle": "统一管理租户、套餐、IM 用户和通信服务配置",
+      "points": {
+        "control": "平台控制",
+        "tenant": "多租户运营",
+        "service": "通信服务配置"
+      }
     },
-    "title": "欢迎回来",
-    "subTitle": "输入您的账号和密码登录",
+    "entryLabel": "平台管理端",
+    "title": "登录 b8im 平台",
+    "subTitle": "请输入平台管理员账号和验证码",
     "roles": {
       "super": "超级管理员",
       "admin": "管理员",

@@ -139,11 +139,17 @@
   },
   "login": {
     "leftView": {
-      "title": "A backend system of beauty and efficiency",
-      "subTitle": "A sleek and practical interface for a great user experience"
+      "title": "b8im messaging platform control plane",
+      "subTitle": "Manage tenants, plans, IM users, and communication service settings",
+      "points": {
+        "control": "Platform control",
+        "tenant": "Multi-tenant ops",
+        "service": "Service settings"
+      }
     },
-    "title": "Welcome back",
-    "subTitle": "Please enter your account and password to login",
+    "entryLabel": "Platform admin",
+    "title": "Sign in to b8im",
+    "subTitle": "Enter your platform administrator account and verification code",
     "roles": {
       "super": "Super Admin",
       "admin": "Admin",
