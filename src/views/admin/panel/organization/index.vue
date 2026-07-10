@@ -113,6 +113,8 @@
         { prop: 'groupInfo.group_name', label: '机构分组' },
         { prop: 'title', label: '站点标题' },
         { prop: 'logo', label: '站点Logo', saiType: 'image' },
+        { prop: 'enterprise_code', label: '企业码', width: 140 },
+        { prop: 'deployment_id', label: '部署标识', width: 140 },
         { prop: 'domain', label: '域名' },
         { prop: 'organization_name', label: '机构名称' },
         { prop: 'status', label: '状态', saiType: 'dict', saiDict: 'data_status' },
