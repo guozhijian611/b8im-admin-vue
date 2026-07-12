@@ -32,35 +32,12 @@
             <el-input :model-value="formData.config_version" disabled />
           </el-form-item>
         </el-col>
-        <el-col :span="12">
-          <el-form-item label="API 服务地址" prop="api_server_url">
-            <el-input v-model="formData.api_server_url" placeholder="https://api.example.com" />
-          </el-form-item>
-        </el-col>
-        <el-col :span="12">
-          <el-form-item label="IM 服务地址" prop="im_server_url">
-            <el-input v-model="formData.im_server_url" placeholder="wss://im.example.com/ws" />
-          </el-form-item>
-        </el-col>
-        <el-col :span="12">
-          <el-form-item label="上传服务地址" prop="upload_server_url">
-            <el-input
-              v-model="formData.upload_server_url"
-              placeholder="https://upload.example.com"
-            />
-          </el-form-item>
-        </el-col>
-        <el-col :span="12">
-          <el-form-item label="Web 服务地址" prop="web_server_url">
-            <el-input v-model="formData.web_server_url" placeholder="https://im.example.com" />
-          </el-form-item>
-        </el-col>
         <el-col :span="24">
           <el-alert
-            type="warning"
+            type="info"
             :closable="false"
             show-icon
-            title="这四个地址共同构成客户端信任根，只能由平台部署管理员原子发布；生产环境必须使用 HTTPS / WSS。"
+            title="机构保存后，请前往“接入线路策略”发布该机构的 API、IM、上传和 Web 线路。机构资料不再直接保存服务 URL。"
           />
         </el-col>
 
@@ -275,12 +252,6 @@
       { required: true, message: '部署标识必须填写', trigger: 'blur' },
       { pattern: /^[a-z0-9][a-z0-9_-]{1,63}$/, message: '部署标识格式无效', trigger: 'blur' }
     ],
-    api_server_url: [{ validator: networkUrlValidator(['https', 'http'], true), trigger: 'blur' }],
-    im_server_url: [{ validator: networkUrlValidator(['wss', 'ws'], true), trigger: 'blur' }],
-    upload_server_url: [
-      { validator: networkUrlValidator(['https', 'http'], true), trigger: 'blur' }
-    ],
-    web_server_url: [{ validator: networkUrlValidator(['https', 'http'], true), trigger: 'blur' }],
     public_security_record_url: [
       { validator: networkUrlValidator(['https', 'http']), trigger: 'blur' }
     ],
@@ -307,10 +278,6 @@
     copyright: '',
     android_download_url: '',
     ios_download_url: '',
-    api_server_url: '',
-    im_server_url: '',
-    upload_server_url: '',
-    web_server_url: '',
     user_agreement_title: '用户协议',
     user_agreement_content: '',
     privacy_policy_title: '隐私政策',
