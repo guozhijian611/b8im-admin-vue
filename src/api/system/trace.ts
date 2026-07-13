@@ -1,5 +1,7 @@
 import request from '@/utils/http'
 
+const TRACE_API_PREFIX = '/saimulti/system/trace'
+
 export interface TraceService {
   name: string
 }
@@ -66,14 +68,14 @@ export interface TraceDetail extends TraceSummary {
 
 export default {
   services() {
-    return request.get<TraceServicesResult>({ url: '/system/trace/services' })
+    return request.get<TraceServicesResult>({ url: `${TRACE_API_PREFIX}/services` })
   },
   search(params: TraceSearchParams) {
-    return request.get<TraceSearchResult>({ url: '/system/trace/search', params })
+    return request.get<TraceSearchResult>({ url: `${TRACE_API_PREFIX}/search`, params })
   },
   read(traceId: string) {
     return request.get<TraceDetail>({
-      url: '/system/trace/read',
+      url: `${TRACE_API_PREFIX}/read`,
       params: { trace_id: traceId }
     })
   }
