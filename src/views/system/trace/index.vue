@@ -1,6 +1,6 @@
 <template>
   <div class="art-full-height trace-page">
-    <ElCard shadow="never">
+    <ElCard class="trace-search-card" shadow="never">
       <template #header>
         <div class="flex flex-wrap items-start justify-between gap-3">
           <div>
@@ -39,7 +39,7 @@
                 v-model="searchForm.service"
                 clearable
                 filterable
-                placeholder="全部服务"
+                placeholder="选择入口服务"
                 :loading="serviceLoading"
                 @change="handleServiceChange"
               >
@@ -71,6 +71,7 @@
             <ElFormItem label="最小耗时">
               <ElInputNumber
                 v-model="searchForm.min_duration_ms"
+                class="w-full"
                 :min="0"
                 :step="100"
                 :precision="0"
@@ -96,9 +97,9 @@
               <div class="flex w-full items-center gap-3">
                 <ElCheckbox v-model="searchForm.error_only">仅异常</ElCheckbox>
                 <ElSelect v-model="searchForm.limit" class="limit-select">
-                  <ElOption :value="20" label="20 条" />
-                  <ElOption :value="50" label="50 条" />
-                  <ElOption :value="100" label="100 条" />
+                  <ElOption :value="20" label="拉取 20" />
+                  <ElOption :value="50" label="拉取 50" />
+                  <ElOption :value="100" label="拉取 100" />
                 </ElSelect>
               </div>
             </ElFormItem>
@@ -114,7 +115,7 @@
       </ElForm>
     </ElCard>
 
-    <ElRow class="mt-4" :gutter="16">
+    <ElRow class="trace-overview mt-4" :gutter="16">
       <ElCol v-for="card in overviewCards" :key="card.label" :xs="12" :sm="12" :lg="6">
         <ElCard class="overview-card" shadow="never">
           <div class="flex items-center justify-between">
@@ -127,13 +128,13 @@
       </ElCol>
     </ElRow>
 
-    <ElCard class="art-table-card mt-4" shadow="never">
+    <ElCard class="art-table-card trace-table-card" shadow="never">
       <template #header>
-        <div class="flex items-center justify-between">
+        <div class="flex items-center justify-between gap-3">
           <div class="font-semibold">链路列表</div>
-          <ElText type="info"
-            >共匹配 {{ searchResult.total }} 条，当前显示 {{ traces.length }} 条</ElText
-          >
+          <ElText type="info">
+            共拉取 {{ searchResult.total }} 条，本页 {{ pagedTraces.length }} 条
+          </ElText>
         </div>
       </template>
 
@@ -147,42 +148,60 @@
       />
 
       <ArtTable
-        rowKey="trace_id"
+        row-key="trace_id"
         :loading="loading"
-        :data="traces"
+        :data="pagedTraces"
         :columns="columns"
+        :pagination="pagination"
+        :show-table-header="false"
         empty-text="暂无匹配的链路，请调整查询条件"
         @row-click="openTrace"
+        @pagination:size-change="handlePageSizeChange"
+        @pagination:current-change="handlePageChange"
       >
-        <template #traceId="{ row }">
+        <!-- slot 名必须与 columns.prop 一致，否则 ArtTable 渲染空单元格 -->
+        <template #trace_id="{ row }">
           <ElTooltip :content="row.trace_id" placement="top">
-            <ElText class="trace-id" type="primary">{{ shortId(row.trace_id) }}</ElText>
+            <div class="trace-id-cell" @click.stop="copyTraceId(row.trace_id)">
+              <ElText class="trace-id" type="primary">{{ shortId(row.trace_id) }}</ElText>
+              <ArtSvgIcon icon="ri:file-copy-line" class="trace-id-copy" />
+            </div>
           </ElTooltip>
         </template>
-        <template #service="{ row }">
-          <div class="flex flex-col gap-1">
-            <span class="font-medium">{{ row.root_service || '-' }}</span>
+        <template #root_service="{ row }">
+          <div class="flex flex-col gap-1 min-w-0">
+            <span class="font-medium truncate">{{ row.root_service || '-' }}</span>
             <ElText size="small" type="info" truncated>{{ row.root_operation || '-' }}</ElText>
           </div>
         </template>
-        <template #duration="{ row }">
+        <template #duration_ms="{ row }">
           <ElTag :type="durationType(row.duration_ms)" effect="light">
             {{ formatDuration(row.duration_ms) }}
           </ElTag>
         </template>
-        <template #errors="{ row }">
+        <template #error_count="{ row }">
           <ElTag v-if="row.error_count > 0" type="danger" effect="light">
             {{ row.error_count }} 个异常
           </ElTag>
           <ElTag v-else type="success" effect="plain">正常</ElTag>
         </template>
         <template #business="{ row }">
-          <div class="flex flex-col gap-1">
+          <div class="flex flex-col gap-1 min-w-0">
             <span>{{ row.organization ? `机构 ${row.organization}` : '-' }}</span>
             <ElText size="small" type="info" truncated>
               {{ row.message_id ? `消息 ${row.message_id}` : '无消息关联' }}
             </ElText>
           </div>
+        </template>
+        <template #services="{ row }">
+          <ElTooltip
+            v-if="row.services?.length"
+            :content="row.services.join(' / ')"
+            placement="top"
+          >
+            <span class="services-text">{{ row.services.join(' / ') }}</span>
+          </ElTooltip>
+          <span v-else>-</span>
         </template>
         <template #operation="{ row }">
           <ElButton link type="primary" @click.stop="openTrace(row)">查看时间线</ElButton>
@@ -190,7 +209,7 @@
       </ArtTable>
     </ElCard>
 
-    <ElDrawer v-model="drawerVisible" size="76%" destroy-on-close>
+    <ElDrawer v-model="drawerVisible" size="76%" destroy-on-close class="trace-drawer">
       <template #header>
         <div>
           <div class="flex flex-wrap items-center gap-2 text-lg font-semibold">
@@ -199,7 +218,12 @@
               {{ traceDetail.error_count > 0 ? '存在异常' : '全部正常' }}
             </ElTag>
           </div>
-          <ElText v-if="traceDetail" type="info">{{ traceDetail.trace_id }}</ElText>
+          <div v-if="traceDetail" class="mt-1 flex flex-wrap items-center gap-2">
+            <ElText type="info" class="trace-id">{{ traceDetail.trace_id }}</ElText>
+            <ElButton link type="primary" size="small" @click="copyTraceId(traceDetail.trace_id)">
+              复制
+            </ElButton>
+          </div>
         </div>
       </template>
 
@@ -208,9 +232,14 @@
 
         <template v-else-if="traceDetail">
           <ElDescriptions :column="4" border>
-            <ElDescriptionsItem label="入口服务">{{ traceDetail.root_service }}</ElDescriptionsItem>
+            <ElDescriptionsItem label="Trace ID">
+              <span class="trace-id">{{ traceDetail.trace_id }}</span>
+            </ElDescriptionsItem>
+            <ElDescriptionsItem label="入口服务">{{
+              traceDetail.root_service || '-'
+            }}</ElDescriptionsItem>
             <ElDescriptionsItem label="入口操作">{{
-              traceDetail.root_operation
+              traceDetail.root_operation || '-'
             }}</ElDescriptionsItem>
             <ElDescriptionsItem label="开始时间">
               {{ formatTime(traceDetail.start_time_ms) }}
@@ -226,45 +255,50 @@
             <ElDescriptionsItem label="消息 ID">
               {{ traceDetail.message_id || '-' }}
             </ElDescriptionsItem>
+            <ElDescriptionsItem label="涉及服务" :span="3">
+              {{ traceDetail.services?.length ? traceDetail.services.join(' / ') : '-' }}
+            </ElDescriptionsItem>
           </ElDescriptions>
 
           <div class="detail-layout mt-5">
             <section class="timeline-panel">
               <div class="mb-3 font-semibold">调用时间线</div>
               <ElEmpty v-if="orderedSpans.length === 0" description="该链路暂无 Span 数据" />
-              <button
-                v-for="item in orderedSpans"
-                :key="item.span.span_id"
-                type="button"
-                class="span-row"
-                :class="{
-                  'is-selected': selectedSpan?.span_id === item.span.span_id,
-                  'is-error': item.span.error
-                }"
-                @click="selectedSpan = item.span"
-              >
-                <div class="span-title" :style="{ paddingLeft: `${item.depth * 18}px` }">
-                  <span class="status-dot"></span>
-                  <div class="min-w-0">
-                    <div class="truncate font-medium">{{ item.span.operation }}</div>
-                    <div class="truncate text-xs text-g-500">{{ item.span.service }}</div>
+              <div v-else class="timeline-scroll">
+                <button
+                  v-for="item in orderedSpans"
+                  :key="item.span.span_id"
+                  type="button"
+                  class="span-row"
+                  :class="{
+                    'is-selected': selectedSpan?.span_id === item.span.span_id,
+                    'is-error': item.span.error
+                  }"
+                  @click="selectedSpan = item.span"
+                >
+                  <div class="span-title" :style="{ paddingLeft: `${item.depth * 18}px` }">
+                    <span class="status-dot"></span>
+                    <div class="min-w-0">
+                      <div class="truncate font-medium">{{ item.span.operation }}</div>
+                      <div class="truncate text-xs text-g-500">{{ item.span.service }}</div>
+                    </div>
                   </div>
-                </div>
-                <div class="span-waterfall">
-                  <span
-                    class="span-bar"
-                    :class="item.span.error ? 'bar-error' : 'bar-normal'"
-                    :style="{ left: `${item.left}%`, width: `${item.width}%` }"
-                  ></span>
-                </div>
-                <div class="span-duration">{{ formatDuration(item.span.duration_ms) }}</div>
-              </button>
+                  <div class="span-waterfall">
+                    <span
+                      class="span-bar"
+                      :class="item.span.error ? 'bar-error' : 'bar-normal'"
+                      :style="{ left: `${item.left}%`, width: `${item.width}%` }"
+                    ></span>
+                  </div>
+                  <div class="span-duration">{{ formatDuration(item.span.duration_ms) }}</div>
+                </button>
+              </div>
             </section>
 
             <aside class="span-detail">
               <div class="mb-3 font-semibold">Span 详情</div>
               <ElEmpty v-if="!selectedSpan" description="点击左侧 Span 查看详情" />
-              <template v-else>
+              <div v-else class="span-detail-scroll">
                 <ElDescriptions :column="1" border size="small">
                   <ElDescriptionsItem label="操作">{{ selectedSpan.operation }}</ElDescriptionsItem>
                   <ElDescriptionsItem label="服务">{{ selectedSpan.service }}</ElDescriptionsItem>
@@ -305,7 +339,7 @@
                     </ElTimelineItem>
                   </ElTimeline>
                 </template>
-              </template>
+              </div>
             </aside>
           </div>
         </template>
@@ -315,6 +349,7 @@
 </template>
 
 <script setup lang="ts">
+  import { ElMessage } from 'element-plus'
   import traceApi, {
     type TraceDetail,
     type TraceSearchParams,
@@ -345,13 +380,13 @@
     min_duration_ms: undefined,
     error_only: false,
     time_range: [],
-    limit: 20
+    limit: 50
   })
 
   const emptySearchResult = (): TraceSearchResult => ({
     items: [],
     total: 0,
-    limit: 20
+    limit: 50
   })
 
   const searchForm = reactive<SearchForm>(initialSearchForm())
@@ -366,8 +401,18 @@
   const detailError = ref('')
   const traceDetail = ref<TraceDetail | null>(null)
   const selectedSpan = ref<TraceSpan | null>(null)
+  const pagination = reactive({
+    current: 1,
+    size: 20,
+    total: 0
+  })
 
   const traces = computed(() => searchResult.value.items)
+  const pagedTraces = computed(() => {
+    const start = (pagination.current - 1) * pagination.size
+    return traces.value.slice(start, start + pagination.size)
+  })
+
   const overviewCards = computed(() => {
     const items = traces.value
     const errorCount = items.filter((item) => item.error_count > 0).length
@@ -377,9 +422,9 @@
     const slowest = items.reduce((max, item) => Math.max(max, item.duration_ms), 0)
     return [
       {
-        label: '本次返回',
+        label: '本次拉取',
         value: `${items.length} 条`,
-        detail: `共匹配 ${searchResult.value.total} 条`,
+        detail: `查询上限 ${searchResult.value.limit} 条`,
         icon: 'ri:route-line',
         iconClass: 'text-primary'
       },
@@ -393,14 +438,14 @@
       {
         label: '平均耗时',
         value: formatDuration(average),
-        detail: '当前返回结果',
+        detail: '当前拉取结果',
         icon: 'ri:speed-up-line',
         iconClass: 'text-warning'
       },
       {
         label: '最慢链路',
         value: formatDuration(slowest),
-        detail: '当前返回结果',
+        detail: '当前拉取结果',
         icon: 'ri:timer-line',
         iconClass: slowest >= 1000 ? 'text-danger' : 'text-primary'
       }
@@ -408,8 +453,8 @@
   })
 
   const columns = [
-    { prop: 'trace_id', label: 'Trace ID', width: 160, useSlot: true },
-    { prop: 'root_service', label: '入口服务 / 操作', minWidth: 210, useSlot: true },
+    { prop: 'trace_id', label: 'Trace ID', minWidth: 200, useSlot: true },
+    { prop: 'root_service', label: '入口服务 / 操作', minWidth: 220, useSlot: true },
     {
       prop: 'start_time_ms',
       label: '开始时间',
@@ -417,8 +462,9 @@
       formatter: (row: TraceSummary) => formatTime(row.start_time_ms)
     },
     { prop: 'duration_ms', label: '耗时', width: 110, useSlot: true },
-    { prop: 'span_count', label: 'Span 数', width: 90, align: 'center' },
+    { prop: 'span_count', label: 'Span 数', width: 90, align: 'center' as const },
     { prop: 'error_count', label: '状态', width: 110, useSlot: true },
+    { prop: 'services', label: '涉及服务', minWidth: 180, useSlot: true },
     { prop: 'business', label: '业务关联', minWidth: 180, useSlot: true },
     { prop: 'operation', label: '操作', width: 120, fixed: 'right' as const, useSlot: true }
   ]
@@ -485,6 +531,7 @@
     }
     loading.value = true
     listError.value = ''
+    pagination.current = 1
     try {
       const params: TraceSearchParams = { limit: searchForm.limit }
       if (searchForm.service) params.service = searchForm.service
@@ -501,9 +548,11 @@
         params.end_time = searchForm.time_range[1].getTime()
       }
       searchResult.value = await traceApi.search(params)
+      pagination.total = searchResult.value.total
     } catch (error) {
       listError.value = error instanceof Error ? error.message : '链路查询失败，请稍后重试'
       searchResult.value = emptySearchResult()
+      pagination.total = 0
     } finally {
       loading.value = false
     }
@@ -511,6 +560,15 @@
 
   function handleServiceChange() {
     searchForm.operation = ''
+  }
+
+  function handlePageSizeChange(size: number) {
+    pagination.size = size
+    pagination.current = 1
+  }
+
+  function handlePageChange(page: number) {
+    pagination.current = page
   }
 
   async function refreshAll() {
@@ -524,6 +582,7 @@
   function resetSearch() {
     Object.assign(searchForm, initialSearchForm())
     if (services.value.length > 0) searchForm.service = services.value[0].name
+    pagination.current = 1
     handleSearch()
   }
 
@@ -540,6 +599,16 @@
       detailError.value = error instanceof Error ? error.message : '链路详情加载失败，请稍后重试'
     } finally {
       detailLoading.value = false
+    }
+  }
+
+  async function copyTraceId(value: string) {
+    if (!value) return
+    try {
+      await navigator.clipboard.writeText(value)
+      ElMessage.success('Trace ID 已复制')
+    } catch {
+      ElMessage.warning('复制失败，请手动选择 Trace ID')
     }
   }
 
@@ -563,7 +632,8 @@
   }
 
   function shortId(value: string) {
-    return value.length > 16 ? `${value.slice(0, 8)}…${value.slice(-6)}` : value
+    if (!value) return '-'
+    return value.length > 20 ? `${value.slice(0, 10)}…${value.slice(-8)}` : value
   }
 
   function spanStatusLabel(span: TraceSpan) {
@@ -580,11 +650,22 @@
 
 <style scoped lang="scss">
   .trace-page {
-    padding-bottom: 20px;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .trace-search-card,
+  .trace-overview {
+    flex-shrink: 0;
+  }
+
+  .trace-table-card {
+    min-height: 320px;
+    margin-top: 12px;
   }
 
   .limit-select {
-    width: 100px;
+    width: 110px;
     margin-left: auto;
   }
 
@@ -595,18 +676,59 @@
 
   .trace-id {
     font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  }
+
+  .trace-id-cell {
+    display: inline-flex;
+    gap: 6px;
+    align-items: center;
+    max-width: 100%;
     cursor: pointer;
+
+    .trace-id {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .trace-id-copy {
+      flex-shrink: 0;
+      color: var(--el-text-color-secondary);
+      opacity: 0.7;
+    }
+
+    &:hover .trace-id-copy {
+      color: var(--el-color-primary);
+      opacity: 1;
+    }
+  }
+
+  .services-text {
+    display: inline-block;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .detail-layout {
     display: grid;
     grid-template-columns: minmax(520px, 1.7fr) minmax(320px, 1fr);
     gap: 20px;
+    min-height: 420px;
   }
 
   .timeline-panel,
   .span-detail {
     min-width: 0;
+    min-height: 0;
+  }
+
+  .timeline-scroll,
+  .span-detail-scroll {
+    max-height: min(62vh, 720px);
+    overflow: auto;
+    padding-right: 4px;
   }
 
   .span-detail {
