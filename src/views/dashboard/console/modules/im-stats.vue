@@ -23,14 +23,7 @@
           <p class="mt-1 text-xs text-g-600">{{ metric.detail }}</p>
         </div>
       </div>
-      <ElAlert
-        v-if="error"
-        class="mt-4"
-        type="error"
-        :closable="false"
-        show-icon
-        :title="error"
-      />
+      <ElAlert v-if="error" class="mt-4" type="error" :closable="false" show-icon :title="error" />
     </ElSkeleton>
   </div>
 </template>
@@ -52,7 +45,7 @@
   const metrics = ref<MetricItem[]>([])
 
   const goOps = () => {
-    router.push('/panel/im-operations')
+    router.push('/im/operations')
   }
 
   onMounted(async () => {

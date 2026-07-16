@@ -55,7 +55,7 @@
     {
       label: 'IM 运维',
       desc: '用户 / 设备 / 会话 / 策略',
-      path: '/panel/im-operations',
+      path: '/im/operations',
       icon: 'ri:message-3-line'
     },
     {

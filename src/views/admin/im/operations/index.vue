@@ -62,7 +62,6 @@
 
     <ElCard class="art-table-card" shadow="never">
       <ElTabs v-model="activeTab" @tab-change="handleTabChange">
-        <ElTabPane label="IM 用户" name="users" />
         <ElTabPane label="设备" name="devices" />
         <ElTabPane label="会话" name="sessions" />
         <ElTabPane label="登录审计" name="audits" />
@@ -96,7 +95,6 @@
           >
             <ElOption label="正常" value="1" />
             <ElOption label="停用 / 已撤销" value="2" />
-            <ElOption v-if="activeTab === 'users'" label="已封禁" value="3" />
           </ElSelect>
           <ElSelect
             v-if="activeTab === 'devices'"
@@ -238,12 +236,12 @@
   } from '@/api/admin/im/operations'
   import PolicyPanel from './modules/policy-panel.vue'
 
-  type TabName = 'users' | 'devices' | 'sessions' | 'audits' | 'policy'
+  type TabName = 'devices' | 'sessions' | 'audits' | 'policy'
   type TableRow = Record<string, any>
 
   defineOptions({ name: 'AdminImOperations' })
 
-  const activeTab = ref<TabName>('users')
+  const activeTab = ref<TabName>('devices')
   const overview = ref<AdminImOverview | null>(null)
   const overviewLoading = ref(false)
   const overviewError = ref('')
@@ -333,18 +331,6 @@
       useSlot: true
     }
     const identity = { prop: 'identity', label: '用户', minWidth: 210, useSlot: true }
-    if (activeTab.value === 'users') {
-      return [
-        { prop: 'id', label: 'ID', width: 80 },
-        organization,
-        identity,
-        { prop: 'im_short_no', label: 'IM 短号', width: 130 },
-        { prop: 'mobile', label: '手机号', width: 140 },
-        { prop: 'status', label: '状态', width: 100, useSlot: true },
-        { prop: 'login_time', label: '最后登录', width: 180 },
-        { prop: 'create_time', label: '创建时间', width: 180 }
-      ]
-    }
     if (activeTab.value === 'devices') {
       return [
         { prop: 'id', label: 'ID', width: 80 },
@@ -414,13 +400,11 @@
     try {
       const params = listParams()
       const response =
-        activeTab.value === 'users'
-          ? await imOperationsApi.users(params)
-          : activeTab.value === 'devices'
-            ? await imOperationsApi.devices(params)
-            : activeTab.value === 'sessions'
-              ? await imOperationsApi.sessions(params)
-              : await imOperationsApi.loginAudits(params)
+        activeTab.value === 'devices'
+          ? await imOperationsApi.devices(params)
+          : activeTab.value === 'sessions'
+            ? await imOperationsApi.sessions(params)
+            : await imOperationsApi.loginAudits(params)
       Object.assign(pageData, response)
     } catch (error) {
       pageData.data = []
