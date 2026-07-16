@@ -1,41 +1,34 @@
-<!-- 工作台页面 -->
+<!-- 工作台：真实平台运维概览 -->
 <template>
   <div>
-    <CardList></CardList>
+    <CardList />
 
     <ElRow :gutter="20">
       <ElCol :sm="24" :md="12" :lg="10">
-        <ActiveUser />
+        <RuntimeHealth />
       </ElCol>
       <ElCol :sm="24" :md="12" :lg="14">
-        <SalesOverview />
+        <ImStats />
       </ElCol>
     </ElRow>
 
     <ElRow :gutter="20">
-      <ElCol :sm="24" :md="24" :lg="12">
-        <NewUser />
+      <ElCol :sm="24" :md="12" :lg="12">
+        <QuickLinks />
       </ElCol>
-      <ElCol :sm="24" :md="12" :lg="6">
-        <Dynamic />
-      </ElCol>
-      <ElCol :sm="24" :md="12" :lg="6">
-        <TodoList />
+      <ElCol :sm="24" :md="12" :lg="12">
+        <ModuleSummary />
       </ElCol>
     </ElRow>
-
-    <AboutProject />
   </div>
 </template>
 
 <script setup lang="ts">
   import CardList from './modules/card-list.vue'
-  import ActiveUser from './modules/active-user.vue'
-  import SalesOverview from './modules/sales-overview.vue'
-  import NewUser from './modules/new-user.vue'
-  import Dynamic from './modules/dynamic-stats.vue'
-  import TodoList from './modules/todo-list.vue'
-  import AboutProject from './modules/about-project.vue'
+  import RuntimeHealth from './modules/runtime-health.vue'
+  import ImStats from './modules/im-stats.vue'
+  import QuickLinks from './modules/quick-links.vue'
+  import ModuleSummary from './modules/module-summary.vue'
 
   defineOptions({ name: 'Console' })
 </script>

@@ -8,6 +8,10 @@ import '@styles/index.scss'                         // 样式
 import '@utils/sys/console.ts'                      // 控制台输出内容
 import { setupGlobDirectives } from './directives'
 import { setupErrorHandle } from './utils/sys/error-handle'
+import { setupOfflineIcons } from '@utils/ui/iconify-loader'
+
+// 菜单/按钮图标离线注册，避免 CDN 失败导致整站无图标
+setupOfflineIcons()
 
 const app = createApp(App)
 initStore(app)

@@ -12,11 +12,19 @@
       <el-form-item label="所属分组" prop="group_id">
         <el-select
           v-model="formData.group_id"
-          :options="optionData.group_id"
-          :props="{ label: 'group_name', value: 'id' }"
           placeholder="请选择所属分组"
           clearable
-        />
+          filterable
+          class="w-full"
+          teleported
+        >
+          <el-option
+            v-for="item in optionData.group_id"
+            :key="item.id"
+            :label="item.group_name ?? item.name ?? String(item.id)"
+            :value="item.id"
+          />
+        </el-select>
       </el-form-item>
     </el-col>
     <el-col v-bind="setSpan(6)">

@@ -12,6 +12,7 @@
     :multiple="multiple"
     :collapse-tags="collapseTags"
     :collapse-tags-tooltip="collapseTagsTooltip"
+    teleported
   >
     <!-- 遍历生成选项 -->
     <el-option

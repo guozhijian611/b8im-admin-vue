@@ -119,16 +119,34 @@
                   <template v-if="item.input_type === 'select'">
                     <el-select
                       v-model="item.value"
-                      :options="item.config_select_data"
+                      class="w-full"
+                      clearable
+                      filterable
+                      teleported
                       @change="handleSelect($event, item)"
                       :placeholder="'请选择' + item.name"
-                    />
+                    >
+                      <el-option
+                        v-for="opt in parseSelectOptions(item.config_select_data)"
+                        :key="String(opt.value)"
+                        :label="opt.label"
+                        :value="normalizeOptionValue(opt.value, item.value)"
+                      />
+                    </el-select>
                   </template>
                   <template v-if="item.input_type === 'input'">
                     <el-input v-model="item.value" :placeholder="'请输入' + item.name" />
                   </template>
-                  <template v-if="item.input_type === 'radio'">
-                    <el-radio-group v-model="item.value" :options="item.config_select_data" />
+                  <template v-if="item.input_type === 'radio' || item.input_type === 'switch'">
+                    <el-radio-group v-model="item.value">
+                      <el-radio
+                        v-for="opt in parseSelectOptions(item.config_select_data)"
+                        :key="String(opt.value)"
+                        :value="normalizeOptionValue(opt.value, item.value)"
+                      >
+                        {{ opt.label }}
+                      </el-radio>
+                    </el-radio-group>
                   </template>
                   <template v-if="item.input_type === 'textarea'">
                     <el-input
@@ -342,6 +360,54 @@
     }
     await api.emailTest({ email: email.value })
     ElMessage.success('发送成功')
+  }
+
+  /** 配置项选项：后端可能返回 JSON 字符串、数组或 null */
+  const parseSelectOptions = (raw: unknown): Array<{ label: string; value: string | number }> => {
+    let data: unknown = raw
+    if (typeof raw === 'string' && raw.trim() !== '') {
+      try {
+        data = JSON.parse(raw)
+      } catch {
+        // 兼容 "关闭:0,开启:1" / "关闭=0,开启=1"
+        return raw
+          .split(/[,，;；\n]/)
+          .map((chunk) => chunk.trim())
+          .filter(Boolean)
+          .map((chunk) => {
+            const parts = chunk.split(/[:：=]/)
+            if (parts.length >= 2) {
+              return { label: parts[0].trim(), value: parts.slice(1).join(':').trim() }
+            }
+            return { label: chunk, value: chunk }
+          })
+      }
+    }
+    if (!Array.isArray(data)) return []
+    return data
+      .map((item) => {
+        if (item && typeof item === 'object') {
+          const row = item as Record<string, unknown>
+          const label = String(row.label ?? row.name ?? row.value ?? '')
+          const value = (row.value ?? row.id ?? '') as string | number
+          return { label, value }
+        }
+        return { label: String(item), value: String(item) }
+      })
+      .filter((item) => item.label !== '')
+  }
+
+  /**
+   * 选项 value 与当前值类型对齐，避免 number/string 不一致导致选中态丢失或看起来“下不来”。
+   */
+  const normalizeOptionValue = (optValue: string | number, current: unknown): string | number => {
+    if (typeof current === 'number' && optValue !== '' && !Number.isNaN(Number(optValue))) {
+      return Number(optValue)
+    }
+    if (typeof current === 'string') {
+      return String(optValue)
+    }
+    return optValue
   }
 
   // 自定义处理切换显示
