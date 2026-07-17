@@ -9,10 +9,10 @@
     @expand="handleExpand"
   >
     <el-col v-bind="setSpan(6)">
-      <el-form-item label="所属分组" prop="group_id">
+      <el-form-item label="所属套餐" prop="group_id">
         <el-select
           v-model="formData.group_id"
-          placeholder="请选择所属分组"
+          placeholder="请选择所属套餐"
           clearable
           filterable
           class="w-full"

@@ -1,5 +1,30 @@
 import request from '@/utils/http'
 
+export type ModuleAssignmentMode = 'inherit' | 'enabled' | 'disabled'
+
+export interface OrganizationModuleCapability {
+  module_key: string
+  name: string
+  description: string
+  category: string
+  version: string
+  platforms: string[]
+  depends_on: Array<{ module_key: string; constraint: string }>
+  assignment_mode: ModuleAssignmentMode
+  package_enabled: boolean
+  status: string
+  effective: boolean
+  expire_at: string | null
+  remark: string
+}
+
+export interface OrganizationModuleCapabilitiesResponse {
+  organization: number
+  organization_name: string
+  group_id: number
+  items: OrganizationModuleCapability[]
+}
+
 /**
  * 机构信息表 API接口
  */
@@ -71,6 +96,28 @@ export default {
   initTenant(params: Record<string, any>) {
     return request.post<any>({
       url: '/saimulti/admin/organization/initTenant',
+      data: params
+    })
+  },
+
+  moduleCapabilities(id: number | string) {
+    return request.get<OrganizationModuleCapabilitiesResponse>({
+      url: '/saimulti/admin/organization/moduleCapabilities',
+      params: { id }
+    })
+  },
+
+  updateModuleCapabilities(params: {
+    id: number
+    assignments: Array<{
+      module_key: string
+      mode: ModuleAssignmentMode
+      expire_at: string | null
+      remark: string
+    }>
+  }) {
+    return request.post<OrganizationModuleCapabilitiesResponse>({
+      url: '/saimulti/admin/organization/updateModuleCapabilities',
       data: params
     })
   }

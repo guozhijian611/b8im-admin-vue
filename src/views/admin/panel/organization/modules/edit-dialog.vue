@@ -95,7 +95,7 @@
 
         <el-col :span="24"><el-divider content-position="left">机构信息</el-divider></el-col>
         <el-col :span="12">
-          <el-form-item label="所属分组" prop="group_id">
+          <el-form-item label="所属套餐" prop="group_id">
             <el-radio-group v-model="formData.group_id">
               <el-radio v-for="item in optionData.treeData" :key="item.id" :label="item.id">{{
                 item.group_name
@@ -238,7 +238,7 @@
   const rules = reactive<FormRules>({
     title: [{ required: true, message: '站点标题必需填写', trigger: 'blur' }],
     logo: [{ required: true, message: '站点Logo必需填写', trigger: 'blur' }],
-    group_id: [{ required: true, message: '所属分组必需填写', trigger: 'blur' }],
+    group_id: [{ required: true, message: '所属套餐必需填写', trigger: 'blur' }],
     organization_name: [{ required: true, message: '机构名称必需填写', trigger: 'blur' }],
     enterprise_code: [
       { required: true, message: '企业码必须填写', trigger: 'blur' },

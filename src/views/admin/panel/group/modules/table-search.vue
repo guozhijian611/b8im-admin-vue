@@ -9,8 +9,8 @@
     @expand="handleExpand"
   >
     <el-col v-bind="setSpan(6)">
-      <el-form-item label="分组名称" prop="group_name">
-        <el-input v-model="formData.group_name" placeholder="请输入分组名称" clearable />
+      <el-form-item label="套餐名称" prop="group_name">
+        <el-input v-model="formData.group_name" placeholder="请输入套餐名称" clearable />
       </el-form-item>
     </el-col>
   </sa-search-bar>

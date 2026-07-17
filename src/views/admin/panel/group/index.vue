@@ -57,6 +57,13 @@
             />
             <SaButton
               v-permission="'saimulti:admin:group:update'"
+              icon="ri:apps-2-add-line"
+              type="primary"
+              tool-tip="模块能力"
+              @click="showModuleDialog('edit', row)"
+            />
+            <SaButton
+              v-permission="'saimulti:admin:group:update'"
               type="secondary"
               @click="showDialog('edit', row)"
             />
@@ -85,6 +92,11 @@
       :data="permissionDialogData"
       @success="refreshData"
     />
+    <ModuleCapabilitiesDialog
+      v-model="moduleDialogVisible"
+      :data="moduleDialogData"
+      @success="refreshData"
+    />
   </div>
 </template>
 
@@ -95,6 +107,7 @@
   import TableSearch from './modules/table-search.vue'
   import EditDialog from './modules/edit-dialog.vue'
   import PermissionDialog from './modules/permission-dialog.vue'
+  import ModuleCapabilitiesDialog from './modules/module-capabilities-dialog.vue'
 
   // 搜索表单
   const searchForm = ref({
@@ -126,10 +139,10 @@
       apiFn: api.list,
       columnsFactory: () => [
         { type: 'selection' },
-        { prop: 'group_name', label: '分组名称' },
+        { prop: 'group_name', label: '套餐名称' },
         { prop: 'sort', label: '排序' },
         { prop: 'status', label: '状态', saiType: 'dict', saiDict: 'data_status' },
-        { prop: 'operation', label: '操作', width: 140, fixed: 'right', useSlot: true }
+        { prop: 'operation', label: '操作', width: 190, fixed: 'right', useSlot: true }
       ]
     }
   })
@@ -152,5 +165,11 @@
     dialogVisible: permissionDialogVisible,
     dialogData: permissionDialogData,
     showDialog: showPermissionDialog
+  } = useSaiAdmin()
+
+  const {
+    dialogVisible: moduleDialogVisible,
+    dialogData: moduleDialogData,
+    showDialog: showModuleDialog
   } = useSaiAdmin()
 </script>

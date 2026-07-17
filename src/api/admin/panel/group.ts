@@ -1,5 +1,22 @@
 import request from '@/utils/http'
 
+export interface GroupModuleCapability {
+  module_key: string
+  name: string
+  description: string
+  category: string
+  version: string
+  platforms: string[]
+  depends_on: Array<{ module_key: string; constraint: string }>
+  enabled: boolean
+}
+
+export interface GroupModuleCapabilitiesResponse {
+  group_id: number
+  group_name: string
+  items: GroupModuleCapability[]
+}
+
 /**
  * 机构分组表 API接口
  */
@@ -85,6 +102,20 @@ export default {
     return request.post<any>({
       url: '/saimulti/admin/group/updateMenuGroup',
       method: 'post',
+      data: params
+    })
+  },
+
+  moduleCapabilities(id: number | string) {
+    return request.get<GroupModuleCapabilitiesResponse>({
+      url: '/saimulti/admin/group/moduleCapabilities',
+      params: { id }
+    })
+  },
+
+  updateModuleCapabilities(params: { id: number; module_keys: string[] }) {
+    return request.post<GroupModuleCapabilitiesResponse>({
+      url: '/saimulti/admin/group/updateModuleCapabilities',
       data: params
     })
   }

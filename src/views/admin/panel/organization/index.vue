@@ -47,6 +47,13 @@
             />
             <SaButton
               v-permission="'saimulti:admin:organization:update'"
+              type="primary"
+              icon="ri:apps-2-add-line"
+              tool-tip="模块能力"
+              @click="showModuleDialog('edit', row)"
+            />
+            <SaButton
+              v-permission="'saimulti:admin:organization:update'"
               type="secondary"
               @click="showDialog('edit', row)"
             />
@@ -67,6 +74,11 @@
       :data="dialogData"
       @success="refreshData"
     />
+    <ModuleCapabilitiesDialog
+      v-model="moduleDialogVisible"
+      :data="moduleDialogData"
+      @success="refreshData"
+    />
   </div>
 </template>
 
@@ -77,6 +89,7 @@
   import api from '@/api/admin/panel/organization'
   import TableSearch from './modules/table-search.vue'
   import EditDialog from './modules/edit-dialog.vue'
+  import ModuleCapabilitiesDialog from './modules/module-capabilities-dialog.vue'
 
   // 搜索表单
   const searchForm = ref({
@@ -110,7 +123,7 @@
       apiFn: api.list,
       columnsFactory: () => [
         { prop: 'id', label: '编号' },
-        { prop: 'groupInfo.group_name', label: '机构分组' },
+        { prop: 'groupInfo.group_name', label: '所属套餐' },
         { prop: 'title', label: '站点标题' },
         { prop: 'logo', label: '站点Logo', saiType: 'image' },
         { prop: 'enterprise_code', label: '企业码', width: 140 },
@@ -119,7 +132,7 @@
         { prop: 'organization_name', label: '机构名称' },
         { prop: 'status', label: '状态', saiType: 'dict', saiDict: 'data_status' },
         { prop: 'is_init', label: '是否初始化', saiType: 'dict', saiDict: 'yes_or_no' },
-        { prop: 'operation', label: '操作', width: 140, fixed: 'right', useSlot: true }
+        { prop: 'operation', label: '操作', width: 180, fixed: 'right', useSlot: true }
       ]
     }
   })
@@ -144,4 +157,9 @@
 
   // 编辑配置
   const { dialogType, dialogVisible, dialogData, showDialog, deleteRow } = useSaiAdmin()
+  const {
+    dialogVisible: moduleDialogVisible,
+    dialogData: moduleDialogData,
+    showDialog: showModuleDialog
+  } = useSaiAdmin()
 </script>

@@ -1,7 +1,7 @@
 <template>
   <el-drawer
     v-model="visible"
-    :title="dialogType === 'add' ? '新增机构分组表' : '编辑机构分组表'"
+    :title="dialogType === 'add' ? '新增套餐' : '编辑套餐'"
     :size="800"
     align-center
     :close-on-click-modal="false"
@@ -10,8 +10,8 @@
     <el-form ref="formRef" :model="formData" :rules="rules" label-width="120px">
       <el-row :gutter="20">
         <el-col :span="24">
-          <el-form-item label="分组名称" prop="group_name">
-            <el-input v-model="formData.group_name" placeholder="请输入分组名称" />
+          <el-form-item label="套餐名称" prop="group_name">
+            <el-input v-model="formData.group_name" placeholder="请输入套餐名称" />
           </el-form-item>
         </el-col>
         <el-col :span="24">
@@ -89,7 +89,7 @@
    * 表单验证规则
    */
   const rules = reactive<FormRules>({
-    group_name: [{ required: true, message: '分组名称必需填写', trigger: 'blur' }]
+    group_name: [{ required: true, message: '套餐名称必需填写', trigger: 'blur' }]
   })
 
   /**
