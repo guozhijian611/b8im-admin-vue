@@ -24,31 +24,39 @@
         @pagination:size-change="handleSizeChange"
         @pagination:current-change="handleCurrentChange"
       >
-        <template #maxFileBytes="{ row }">
-          <span :title="`${row.max_file_bytes} B`">{{ formatByteCount(row.max_file_bytes) }}</span>
+        <template #quota="{ row }">
+          <ElTag v-if="row.unlimited" type="success">无限</ElTag>
+          <span v-else :title="`${row.quota_value} B`">
+            {{ formatQuotaByteCount(row.quota_value, row.unlimited) }}
+          </span>
         </template>
-        <template #largeFile="{ row }">
-          <ElTag :type="row.large_file_enabled === 1 ? 'success' : 'info'">
-            {{ row.large_file_enabled === 1 ? '开启' : '关闭' }}
-          </ElTag>
+        <template #used="{ row }">
+          <span :title="`${row.used_value} B`">{{ formatByteCount(row.used_value) }}</span>
+          <div class="cell-secondary">{{ row.used_file_count }} 个已确认文件</div>
         </template>
-        <template #preview="{ row }">
-          <ElTag :type="row.preview_enabled === 1 ? 'success' : 'info'">
-            {{ row.preview_enabled === 1 ? '开启' : '关闭' }}
-          </ElTag>
+        <template #held="{ row }">
+          <span :title="`${row.held_value} B`">{{ formatByteCount(row.held_value) }}</span>
+          <div class="cell-secondary">{{ row.held_file_count }} 个占用中文件</div>
         </template>
-        <template #status="{ row }">
-          <ElTag :type="row.status === 1 ? 'success' : 'info'">
-            {{ row.status === 1 ? '启用' : '停用' }}
-          </ElTag>
+        <template #occupancy="{ row }">
+          <span :title="`${row.occupancy_value} B`">{{
+            formatByteCount(row.occupancy_value)
+          }}</span>
         </template>
+        <template #remaining="{ row }">
+          <ElTag v-if="row.remaining_value === null" type="success">无限</ElTag>
+          <span v-else :title="`${row.remaining_value} B`">
+            {{ formatByteCount(row.remaining_value) }}
+          </span>
+        </template>
+        <template #ratio="{ row }">{{ formatUsageRatio(row.usage_ratio) }}</template>
         <template #operation="{ row }">
           <ElButton
-            v-permission="'saimulti:admin:file_media:update'"
+            v-permission="'saimulti:admin:storage_quota:update'"
             size="small"
             @click="showEdit(row)"
           >
-            编辑策略
+            调整容量
           </ElButton>
         </template>
       </ArtTable>
@@ -56,8 +64,8 @@
 
     <ElDialog
       v-model="dialogVisible"
-      title="编辑文件媒体策略"
-      width="520px"
+      title="调整机构存储容量"
+      width="540px"
       align-center
       :close-on-click-modal="false"
       @close="invalidateDetailRequest"
@@ -70,18 +78,14 @@
         label-width="150px"
       >
         <ElFormItem label="机构">{{ form.organization }}</ElFormItem>
-        <ElFormItem label="单文件上限（字节）" prop="max_file_bytes">
-          <ElInput v-model="form.max_file_bytes" inputmode="numeric" autocomplete="off" />
-          <div class="form-tip">{{ formatByteCount(form.max_file_bytes) }}，允许 1 B 至 2 GiB</div>
+        <ElFormItem label="当前占用">
+          <span :title="`${form.occupancy_value} B`">{{
+            formatByteCount(form.occupancy_value)
+          }}</span>
         </ElFormItem>
-        <ElFormItem label="大文件增强">
-          <ElSwitch v-model="form.large_file_enabled" :active-value="1" :inactive-value="0" />
-        </ElFormItem>
-        <ElFormItem label="预览增强">
-          <ElSwitch v-model="form.preview_enabled" :active-value="1" :inactive-value="0" />
-        </ElFormItem>
-        <ElFormItem label="策略状态">
-          <ElSwitch v-model="form.status" :active-value="1" :inactive-value="0" />
+        <ElFormItem label="容量上限（字节）" prop="quota_value">
+          <ElInput v-model="form.quota_value" inputmode="numeric" autocomplete="off" />
+          <div class="form-tip">0 表示无限；当前输入：{{ quotaInputPreview }}</div>
         </ElFormItem>
       </ElForm>
       <template #footer>
@@ -98,11 +102,13 @@
   import { ElMessage } from 'element-plus'
   import type { FormInstance, FormRules } from 'element-plus'
   import { useTable } from '@/hooks/useTable'
-  import api from '@/api/file-media'
-  import type { FileMediaPolicy, FileMediaPolicyFlag, FileMediaPolicyRow } from '@/api/file-media'
+  import api from '@/api/storage-quota'
+  import type { StorageQuota } from '@/api/storage-quota'
   import { createLatestRequestFence } from '@/utils/latestRequestFence'
   import {
     formatByteCount,
+    formatQuotaByteCount,
+    formatUsageRatio,
     parseByteCount,
     parsePositiveServerInteger,
     PHP_INT_MAX_DECIMAL
@@ -122,13 +128,16 @@
     refreshData
   } = useTable({
     core: {
-      apiFn: api.policyIndex,
+      apiFn: api.index,
       columnsFactory: () => [
         { prop: 'organization', label: '机构', width: 100 },
-        { prop: 'maxFileBytes', label: '单文件上限', minWidth: 150, useSlot: true },
-        { prop: 'largeFile', label: '大文件', width: 100, useSlot: true },
-        { prop: 'preview', label: '预览', width: 100, useSlot: true },
-        { prop: 'status', label: '状态', width: 90, useSlot: true },
+        { prop: 'quota', label: '容量上限', minWidth: 130, useSlot: true },
+        { prop: 'used', label: '已确认用量', minWidth: 150, useSlot: true },
+        { prop: 'held', label: '占用中', minWidth: 150, useSlot: true },
+        { prop: 'occupancy', label: '总占用', minWidth: 120, useSlot: true },
+        { prop: 'remaining', label: '剩余', minWidth: 120, useSlot: true },
+        { prop: 'ratio', label: '使用率', width: 100, useSlot: true },
+        { prop: 'update_time', label: '更新时间', minWidth: 170 },
         { prop: 'operation', label: '操作', width: 120, useSlot: true, fixed: 'right' }
       ]
     }
@@ -149,33 +158,36 @@
     getData()
   }
 
-  interface PolicyForm {
-    organization: number
-    max_file_bytes: string
-    large_file_enabled: FileMediaPolicyFlag
-    preview_enabled: FileMediaPolicyFlag
-    status: FileMediaPolicyFlag
-  }
-
   const dialogVisible = ref(false)
   const detailLoading = ref(false)
   const saving = ref(false)
   const formRef = ref<FormInstance>()
   const detailRequestFence = createLatestRequestFence()
-  const form = reactive<PolicyForm>({
+  const form = reactive({
     organization: 0,
-    max_file_bytes: '',
-    large_file_enabled: 0,
-    preview_enabled: 0,
-    status: 0
+    quota_value: '',
+    occupancy_value: '0',
+    version: 0
   })
+  const quotaInputPreview = computed(() =>
+    form.quota_value === '0' ? '无限' : formatByteCount(form.quota_value)
+  )
   const rules = reactive<FormRules>({
-    max_file_bytes: [
+    quota_value: [
       {
         validator: (_rule, value: string, callback) => {
-          const bytes = parseByteCount(value)
-          if (bytes === null || bytes < 1n || bytes > 2147483648n) {
-            callback(new Error('请输入 1 至 2147483648 的规范十进制整数'))
+          const quota = parseByteCount(value)
+          const occupancy = parseByteCount(form.occupancy_value)
+          if (quota === null) {
+            callback(new Error(`请输入 0 至 ${PHP_INT_MAX_DECIMAL} 的规范十进制整数`))
+            return
+          }
+          if (occupancy === null) {
+            callback(new Error('当前占用数据无效，请刷新后重试'))
+            return
+          }
+          if (quota !== 0n && quota < occupancy) {
+            callback(new Error('容量上限不能低于当前总占用'))
             return
           }
           callback()
@@ -185,31 +197,29 @@
     ]
   })
 
-  const fillForm = (policy: FileMediaPolicy & { organization: number }) => {
+  const fillForm = (quota: StorageQuota) => {
     Object.assign(form, {
-      organization: policy.organization,
-      max_file_bytes: policy.max_file_bytes,
-      large_file_enabled: policy.large_file_enabled,
-      preview_enabled: policy.preview_enabled,
-      status: policy.status
+      organization: quota.organization,
+      quota_value: quota.quota_value,
+      occupancy_value: quota.occupancy_value,
+      version: quota.version
     })
   }
 
-  const showEdit = async (row: FileMediaPolicyRow) => {
+  const showEdit = async (row: StorageQuota) => {
     const generation = detailRequestFence.begin()
     detailLoading.value = true
     Object.assign(form, {
       organization: row.organization,
-      max_file_bytes: '',
-      large_file_enabled: 0,
-      preview_enabled: 0,
-      status: 0
+      quota_value: '',
+      occupancy_value: '0',
+      version: 0
     })
     dialogVisible.value = true
     try {
-      const policy = await api.policyRead(row.organization)
+      const quota = await api.read(row.organization)
       if (!detailRequestFence.isCurrent(generation) || !dialogVisible.value) return
-      fillForm({ ...policy, organization: row.organization })
+      fillForm(quota)
     } catch {
       if (detailRequestFence.isCurrent(generation)) {
         dialogVisible.value = false
@@ -237,15 +247,12 @@
 
     saving.value = true
     try {
-      const payload = {
+      await api.update({
         organization: form.organization,
-        max_file_bytes: form.max_file_bytes,
-        large_file_enabled: form.large_file_enabled,
-        preview_enabled: form.preview_enabled,
-        status: form.status
-      }
-      await api.policyUpdate(payload)
-      ElMessage.success('策略已保存')
+        quota_value: form.quota_value,
+        version: form.version
+      })
+      ElMessage.success('存储容量已更新')
       dialogVisible.value = false
       refreshData()
     } finally {
@@ -257,6 +264,7 @@
 </script>
 
 <style scoped>
+  .cell-secondary,
   .form-tip {
     color: var(--el-text-color-secondary);
     font-size: 12px;
