@@ -73,10 +73,6 @@
   const emit = defineEmits<Emits>()
 
   const formRef = ref<FormInstance>()
-  const optionData = reactive({
-    treeData: <any[]>[]
-  })
-
   /**
    * 弹窗显示状态双向绑定
    */

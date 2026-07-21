@@ -15,7 +15,12 @@
         <el-input v-model="formData.name" placeholder="请输入配置标题" />
       </el-form-item>
       <el-form-item label="组件类型" prop="input_type">
-        <el-select v-model="formData.input_type" class="w-full" clearable placeholder="请选择组件类型">
+        <el-select
+          v-model="formData.input_type"
+          class="w-full"
+          clearable
+          placeholder="请选择组件类型"
+        >
           <el-option
             v-for="item in inputComponent"
             :key="item.value"

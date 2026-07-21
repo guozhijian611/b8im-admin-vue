@@ -25,8 +25,9 @@
         @pagination:current-change="handleCurrentChange"
       >
         <template #usage="{ row }">
-          {{ formatBytes(row.used_storage_bytes) }} / {{ formatBytes(row.max_storage_bytes) }}
-          ({{ Math.round(Number(row.usage_ratio || 0) * 100) }}%)
+          {{ formatBytes(row.used_storage_bytes) }} / {{ formatBytes(row.max_storage_bytes) }} ({{
+            Math.round(Number(row.usage_ratio || 0) * 100)
+          }}%)
         </template>
         <template #status="{ row }">
           <ElTag :type="Number(row.status) === 1 ? 'success' : 'info'">
