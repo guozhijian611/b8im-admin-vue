@@ -26,14 +26,7 @@
           </ElTag>
         </div>
       </div>
-      <ElAlert
-        v-if="error"
-        class="mt-4"
-        type="error"
-        :closable="false"
-        show-icon
-        :title="error"
-      />
+      <ElAlert v-if="error" class="mt-4" type="error" :closable="false" show-icon :title="error" />
     </ElSkeleton>
   </div>
 </template>
@@ -59,9 +52,7 @@
     try {
       const overview = (await imOpsApi.overview()) as AdminImOverview
       overallHealthy.value = overview.status === 'healthy'
-      checkedAt.value = overview.checked_at
-        ? `检查时间 ${overview.checked_at}`
-        : '实时检查'
+      checkedAt.value = overview.checked_at ? `检查时间 ${overview.checked_at}` : '实时检查'
       items.value = [
         {
           label: '数据库',

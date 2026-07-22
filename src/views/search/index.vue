@@ -28,11 +28,7 @@
           <ElTag>{{ row.status }}</ElTag>
         </template>
         <template #operation="{ row }">
-          <ElButton
-            v-permission="'saimulti:admin:search:job'"
-            size="small"
-            @click="doRebuild(row)"
-          >
+          <ElButton v-permission="'saimulti:admin:search:job'" size="small" @click="doRebuild(row)">
             重建
           </ElButton>
         </template>

@@ -73,7 +73,7 @@
 
   // 选项数据
   const optionData = reactive({
-    group_id: <any[]>[],
+    group_id: <any[]>[]
   })
 
   // 初始化选项数据

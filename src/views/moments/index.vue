@@ -55,7 +55,7 @@
   import api from '@/api/moments'
 
   const searchForm = reactive({ keyword: '', organization: '' })
-  const { selectedRows, handleSelectionChange } = useSaiAdmin()
+  const { handleSelectionChange } = useSaiAdmin()
   const {
     columns,
     columnChecks,

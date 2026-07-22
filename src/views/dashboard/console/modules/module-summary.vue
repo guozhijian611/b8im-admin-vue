@@ -30,14 +30,7 @@
           </ElTag>
         </div>
       </div>
-      <ElAlert
-        v-if="error"
-        class="mt-4"
-        type="error"
-        :closable="false"
-        show-icon
-        :title="error"
-      />
+      <ElAlert v-if="error" class="mt-4" type="error" :closable="false" show-icon :title="error" />
     </ElSkeleton>
   </div>
 </template>

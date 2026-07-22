@@ -1,21 +1,53 @@
 import request from '@/utils/http'
 
+export type FileMediaPolicyFlag = 0 | 1
+
+export interface FileMediaPolicy {
+  max_file_bytes: string
+  large_file_enabled: FileMediaPolicyFlag
+  preview_enabled: FileMediaPolicyFlag
+  status: FileMediaPolicyFlag
+}
+
+export interface FileMediaPolicyRow extends FileMediaPolicy {
+  organization: number
+}
+
+export interface FileMediaPolicyListParams {
+  page?: number
+  limit?: number
+  organization?: number | string
+  status?: FileMediaPolicyFlag
+}
+
+export interface FileMediaPolicyUpdatePayload extends FileMediaPolicy {
+  organization: number
+}
+
 const prefix = '/saimulti/admin/file-media'
 
 export default {
-  quotaList(params: Record<string, any>) {
-    return request.get<Api.Common.ApiPage>({ url: `${prefix}/quotaIndex`, params })
+  policyIndex(params: FileMediaPolicyListParams) {
+    return request.get<Api.Common.ApiPage<FileMediaPolicyRow>>({
+      url: `${prefix}/policyIndex`,
+      params
+    })
   },
-  quotaRead(organization: number | string) {
-    return request.get<Api.Common.ApiData>({ url: `${prefix}/quotaRead`, params: { organization } })
+  policyRead(organization: number) {
+    return request.get<FileMediaPolicy>({
+      url: `${prefix}/policyRead`,
+      params: { organization }
+    })
   },
-  quotaUpdate(data: Record<string, any>) {
-    return request.put<Api.Common.ApiData>({ url: `${prefix}/quotaUpdate`, data })
-  },
-  itemList(params: Record<string, any>) {
-    return request.get<Api.Common.ApiPage>({ url: `${prefix}/itemIndex`, params })
-  },
-  folderList(params: Record<string, any>) {
-    return request.get<Api.Common.ApiPage>({ url: `${prefix}/folderIndex`, params })
+  policyUpdate(data: FileMediaPolicyUpdatePayload) {
+    const payload: FileMediaPolicyUpdatePayload = {
+      organization: data.organization,
+      max_file_bytes: data.max_file_bytes,
+      large_file_enabled: data.large_file_enabled,
+      preview_enabled: data.preview_enabled,
+      status: data.status
+    }
+
+    return request.put<FileMediaPolicy>({ url: `${prefix}/policyUpdate`, data: payload })
   }
 }

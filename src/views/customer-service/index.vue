@@ -4,13 +4,25 @@
       <ArtTableHeader v-model:columns="columnChecks" :loading="loading" @refresh="refreshData">
         <template #left>
           <ElSpace wrap>
-            <ElSelect v-model="searchForm.status" clearable placeholder="状态" style="width: 120px" @change="doSearch">
+            <ElSelect
+              v-model="searchForm.status"
+              clearable
+              placeholder="状态"
+              style="width: 120px"
+              @change="doSearch"
+            >
               <ElOption label="排队中" value="queued" />
               <ElOption label="已分配" value="assigned" />
               <ElOption label="进行中" value="active" />
               <ElOption label="已关闭" value="closed" />
             </ElSelect>
-            <ElInput v-model="searchForm.organization" clearable placeholder="机构ID" style="width: 120px" @keyup.enter="doSearch" />
+            <ElInput
+              v-model="searchForm.organization"
+              clearable
+              placeholder="机构ID"
+              style="width: 120px"
+              @keyup.enter="doSearch"
+            />
             <ElButton type="primary" @click="doSearch">搜索</ElButton>
           </ElSpace>
         </template>
@@ -25,7 +37,9 @@
         @pagination:current-change="handleCurrentChange"
       >
         <template #status="{ row }">{{ statusLabel(row.status) }}</template>
-        <template #customer="{ row }">{{ row.customer_subject_type }}:{{ row.customer_subject_id }}</template>
+        <template #customer="{ row }"
+          >{{ row.customer_subject_type }}:{{ row.customer_subject_id }}</template
+        >
       </ArtTable>
     </ElCard>
   </div>
